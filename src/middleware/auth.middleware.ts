@@ -20,7 +20,10 @@ export const authMiddleware = (
   if (!token) return res.status(401).json({ message: "Unauthorized" });
 
   try {
-    const decoded = jwt.verify(token, env.JWT_SECRET) as any;
+    const decoded = jwt.verify(token, env.JWT_SECRET) as {
+      userId: number;
+      role: "USER" | "ADMIN";
+    };
     req.userId = decoded.userId;
     req.role = decoded.role.toUpperCase() as "USER" | "ADMIN";
     next();

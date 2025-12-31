@@ -105,7 +105,10 @@ export const addTaskToGroup = async (req: AuthRequest, res: Response) => {
     if (error.message === "TASK_NOT_FOUND")
       return res.status(404).json({ message: "Task not found" });
 
-    return res.status(403).json({ message: "Forbidden" });
+   if (error.message === "FORBIDDEN")
+      return res.status(403).json({ message: "Forbidden" });
+
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 

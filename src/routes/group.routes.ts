@@ -19,7 +19,7 @@ router.get("/", getGroups);
 router.put("/:id", updateGroup);
 router.delete("/:id", deleteGroup);
 
-router.post("/:id/tasks/:taskId", addTaskToGroup);
-router.delete("/:id/tasks/:taskId", removeTaskFromGroup);
+router.post("/:groupId/tasks/:taskId", addTaskToGroup);
+router.delete("/:groupId/tasks/:taskId", removeTaskFromGroup);
 
 export default router;

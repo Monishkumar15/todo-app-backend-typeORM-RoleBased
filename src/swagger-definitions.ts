@@ -265,7 +265,7 @@
 
 /**
  * @openapi
- * /api/groups/{id}/tasks/{taskId}:
+ * /api/groups/{groupId}/tasks/{taskId}:
  *   post:
  *     summary: Add task to group
  *     tags:
@@ -273,7 +273,7 @@
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - name: id
+ *       - name: groupId
  *         in: path
  *         required: true
  *         schema:
@@ -290,7 +290,7 @@
 
 /**
  * @openapi
- * /api/groups/{id}/tasks/{taskId}:
+ * /api/groups/{groupId}/tasks/{taskId}:
  *   delete:
  *     summary: Remove task from group
  *     tags:
@@ -298,7 +298,7 @@
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - name: id
+ *       - name: groupId
  *         in: path
  *         required: true
  *         schema:
