@@ -10,7 +10,7 @@ export class TaskGroup {
   @Column()
   name!: string;
 
-  @ManyToOne(() => User, user => user.taskgroups)
+  @ManyToOne(() => User, user => user.taskGroups)
   user!: User;
 
   @OneToMany(() => Task, task => task.group)

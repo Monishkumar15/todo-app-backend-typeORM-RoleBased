@@ -25,5 +25,5 @@ export class User {
   tasks!: Task[];
 
   @OneToMany(() => TaskGroup, group => group.user)
-  taskgroups!: TaskGroup[];
+  taskGroups!: TaskGroup[];
 }

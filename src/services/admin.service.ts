@@ -19,13 +19,21 @@ export class AdminService {
   async getUserOverview(userId: number) {
     return this.userRepo.findOne({
       where: { id: userId },
-      relations: [
+      relations: {
+      taskGroups: {
+        tasks: true,
+      },
+      tasks: true,
+    },
+    });
+  }
+  /**
+   *  relations: [
         "taskGroups",
         "taskGroups.tasks",
         "tasks",
       ],
-    });
-  }
+   */
 
   /**
    * ACTIVATE / DEACTIVATE USER
