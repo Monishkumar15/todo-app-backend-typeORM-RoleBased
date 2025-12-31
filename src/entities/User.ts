@@ -2,7 +2,12 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
 import { Task } from "./Task";
 import { TaskGroup } from "./TaskGroup";
 
-export type UserRole = "ADMIN" | "USER";
+// export type UserRole = "ADMIN" | "USER";
+export enum UserRoleEnum {
+  USER = "USER",
+  ADMIN = "ADMIN",
+}
+
 
 @Entity()
 export class User {
@@ -12,11 +17,16 @@ export class User {
   @Column({ unique: true })
   email!: string;
 
-  @Column()
+  // Password NEVER comes unless explicitly selected
+  @Column({ select: false })
   password!: string;
 
-  @Column({ type: "enum", enum: ["ADMIN", "USER"], default: "USER" })
-  role!: UserRole;
+  @Column({
+  type: "enum",
+  enum: UserRoleEnum,
+  default: UserRoleEnum.USER,
+})
+  role!: UserRoleEnum;
 
   @Column({ default: true })
   isActive!: boolean;
@@ -27,3 +37,5 @@ export class User {
   @OneToMany(() => TaskGroup, group => group.user)
   taskGroups!: TaskGroup[];
 }
+
+

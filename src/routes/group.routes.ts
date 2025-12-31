@@ -4,6 +4,7 @@ import {
   getGroups,
   updateGroup,
   deleteGroup,
+  getGroupById,
   addTaskToGroup,
   removeTaskFromGroup,
 } from "../controllers/group.controller";
@@ -16,6 +17,7 @@ router.use(authMiddleware, activeMiddleware);
 
 router.post("/", createGroup);
 router.get("/", getGroups);
+router.get("/:id", getGroupById);
 router.put("/:id", updateGroup);
 router.delete("/:id", deleteGroup);
 

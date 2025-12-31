@@ -25,7 +25,7 @@ export const authMiddleware = (
       role: "USER" | "ADMIN";
     };
     req.userId = decoded.userId;
-    req.role = decoded.role.toUpperCase() as "USER" | "ADMIN";
+    req.role = decoded.role;
     next();
   } catch {
     return res.status(401).json({ message: "Invalid token" });

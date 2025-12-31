@@ -216,6 +216,39 @@
 /**
  * @openapi
  * /api/groups/{id}:
+ *   get:
+ *     summary: Get group by ID
+ *     description: Get a specific group with its tasks. Only the group owner can access it.
+ *     tags:
+ *       - Groups
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: number
+ *         description: Group ID
+ *     responses:
+ *       200:
+ *         description: Group fetched successfully
+ *         
+ *       401:
+ *         description: Unauthorized
+ *         
+ *       403:
+ *         description: Forbidden
+ *         
+ *       404:
+ *         description: Group not found
+ *         
+ */
+
+
+/**
+ * @openapi
+ * /api/groups/{id}:
  *   put:
  *     summary: Update group by ID
  *     tags:

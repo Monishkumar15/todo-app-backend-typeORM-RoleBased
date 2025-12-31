@@ -21,6 +21,7 @@ export const createTask = async (req: AuthRequest, res: Response) => {
       groupId
     );
 
+    
     return res.status(201).json(task);
   } catch (error: any) {
     return res
@@ -49,6 +50,7 @@ export const getTaskById = async (req: AuthRequest, res: Response) => {
     const task = await taskService.getTaskById(taskId, req.userId!);
     return res.status(200).json(task);
   } catch (error: any) {
+    console.error("Get task by ID error:", error);
     return res
       .status(error.status || 500)
       .json({ message: error.message });
@@ -62,8 +64,7 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
       taskId,
       req.userId!,
       req.body
-    );
-
+    ); 
     return res.status(200).json(task);
   } catch (error: any) {
     return res

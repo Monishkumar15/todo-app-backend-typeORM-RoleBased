@@ -42,20 +42,25 @@ export class TaskService {
       group,
     });
 
-    return await this.taskRepo.save(task);
+    const response = await this.taskRepo.save(task);
+    return this.mapTask(response);
   }
 
   async getTasks(userId: number) {
-    return await this.taskRepo.find({
+    const tasks = await this.taskRepo.find({
       where: { user: { id: userId } },
       relations: ["group"],
     });
+
+    return tasks.map((task) => this.mapTask(task));
   }
 
   async getTaskById(taskId: number, userId: number) {
     const task = await this.taskRepo.findOne({
-      where: { id: taskId },
-      relations: ["user", "group"],
+      where: {
+        id: taskId,
+      },
+      relations: { user: true, group: true },
     });
 
     if (!task) {
@@ -63,17 +68,36 @@ export class TaskService {
     }
 
     if (task.user.id !== userId) {
-      throw { status: 403, message: "Forbidden" };
+      throw {
+        status: 403,
+        message: "Forbidden: You are not allowed to access this task",
+      };
     }
 
-    return task;
+    /** return {
+    id: task.id,
+    title: task.title,
+    description: task.description,
+    status: task.status,
+    group: task.group && {
+      id: task.group.id,
+      name: task.group.name,
+    },
+  }; */
+    /** return {
+    id: task.id,
+    title: task.title,
+    description: task.description,
+    status: task.status,
+    groupId: task.group?.id ?? null,
+    groupName: task.group?.name ?? null,
+  }; */
+    return this.mapTask(task);
+    // ! Relations are optional → always use ?.
+    // ! API responses should be explicit → use ?? null
   }
 
-  async updateTask(
-    taskId: number,
-    userId: number,
-    data: Partial<Task>
-  ) {
+  async updateTask(taskId: number, userId: number, data: Partial<Task>) {
     const task = await this.getTaskById(taskId, userId);
 
     if (data.status && !VALID_STATUS.includes(data.status)) {
@@ -81,11 +105,39 @@ export class TaskService {
     }
 
     Object.assign(task, data);
-    return await this.taskRepo.save(task);
+     await this.taskRepo.save(task);
+
+    const updated = await this.taskRepo.findOne({
+      where: { id: task.id },
+      relations: { group: true },
+    });
+
+    return this.mapTask(updated!);
   }
 
+  // async deleteTask(taskId: number, userId: number) {
+  //   const task = await this.getTaskById(taskId, userId);
+  //   await this.taskRepo.remove(task);
+  // }
   async deleteTask(taskId: number, userId: number) {
-    const task = await this.getTaskById(taskId, userId);
-    await this.taskRepo.remove(task);
+    const result = await this.taskRepo.delete({
+      id: taskId,
+      user: { id: userId },
+    });
+
+    if (result.affected === 0) {
+      throw { status: 404, message: "Task not found" };
+    }
+  }
+  
+  private mapTask(task: Task) {
+    return {
+      id: task.id,
+      title: task.title,
+      description: task.description,
+      status: task.status,
+      groupId: task.group?.id ?? null,
+      groupName: task.group?.name ?? null,
+    };
   }
 }
