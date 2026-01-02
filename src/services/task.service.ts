@@ -50,6 +50,9 @@ export class TaskService {
     const tasks = await this.taskRepo.find({
       where: { user: { id: userId } },
       relations: ["group"],
+      order: {
+        id: "ASC", // task order
+      },
     });
 
     return tasks.map((task) => this.mapTask(task));

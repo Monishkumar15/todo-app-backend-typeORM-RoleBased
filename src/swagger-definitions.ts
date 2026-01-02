@@ -348,6 +348,220 @@
  
 /**
  * @openapi
+ * /api/groups/{fromGroupId}/move/{toGroupId}:
+ *   post:
+ *     summary: Move all tasks from one group to another
+ *     tags:
+ *       - Groups
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: fromGroupId
+ *         in: path
+ *         required: true
+ *         description: Source group ID (tasks will be moved from here)
+ *         schema:
+ *           type: number
+ *       - name: toGroupId
+ *         in: path
+ *         required: true
+ *         description: Destination group ID (tasks will be moved here)
+ *         schema:
+ *           type: number
+ *     responses:
+ *       200:
+ *         description: Tasks moved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 fromGroup:
+ *                   type: object
+ *                   properties:
+ *                     groupId:
+ *                       type: number
+ *                       example: 3
+ *                     groupName:
+ *                       type: string
+ *                       example: Routine
+ *                     tasks:
+ *                       type: array
+ *                       items: {}
+ *                       example: []
+ *                 toGroup:
+ *                   type: object
+ *                   properties:
+ *                     groupId:
+ *                       type: number
+ *                       example: 8
+ *                     groupName:
+ *                       type: string
+ *                       example: SUMMATION
+ *                     tasks:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           taskId:
+ *                             type: number
+ *                           taskTitle:
+ *                             type: string
+ *                           taskDescription:
+ *                             type: string
+ *                           taskStatus:
+ *                             type: string
+ *       400:
+ *         description: Invalid operation
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *             examples:
+ *               sameGroup:
+ *                 value:
+ *                   message: Source and destination groups must be different
+ *               singleGroup:
+ *                 value:
+ *                   message: At least two groups are required to move tasks
+ *               noTasks:
+ *                 value:
+ *                   message: Source group has no tasks to move
+ *       403:
+ *         description: Forbidden (accessing another user's group)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *             example:
+ *               message: Forbidden
+ *       404:
+ *         description: Group not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *             example:
+ *               message: Group not found
+ */
+
+/**
+ * @openapi
+ * /api/groups/{fromGroupId}/tasks/{taskId}/move/{toGroupId}:
+ *   post:
+ *     summary: Move a task from one group to another
+ *     tags:
+ *       - Groups
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: fromGroupId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: number
+ *       - name: taskId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: number
+ *       - name: toGroupId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: number
+ *     responses:
+ *       200:
+ *         description: Task moved successfully
+ *       400:
+ *         description: Invalid operation
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Group or task not found
+ */
+
+/**
+ * @openapi
+ * /api/groups/{groupId}/tasks:
+ *   delete:
+ *     summary: Remove all tasks from a group
+ *     description: >
+ *       Removes all tasks from the specified group for the authenticated user.
+ *       Tasks are not deleted; only the group association is removed.
+ *     tags:
+ *       - Groups
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: groupId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: number
+ *     responses:
+ *       200:
+ *         description: All tasks removed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 groupId:
+ *                   type: number
+ *                   example: 8
+ *                 groupName:
+ *                   type: string
+ *                   example: SUMMATION
+ *                 tasks:
+ *                   type: array
+ *                   example: []
+ *       400:
+ *         description: No tasks exist in this group
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: No tasks in this group
+ *       403:
+ *         description: Forbidden - Group does not belong to the user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Forbidden
+ *       404:
+ *         description: Group not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Group not found
+ *       500:
+ *         description: Internal server error
+ */
+
+
+/**
+ * @openapi
  * /api/admin/users:
  *   get:
  *     summary: Get all users (admin only)

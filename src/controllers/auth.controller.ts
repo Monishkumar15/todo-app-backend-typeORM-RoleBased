@@ -9,32 +9,38 @@ const MIN_PASSWORD_LENGTH = 6;
 
 export const register = async (req: AuthRequest, res: Response) => {
   try {
-    const { email, password, role = "user" } = req.body;
+    const { email, password, role = "USER" } = req.body;
 
+
+    const normalizedRole = role.toUpperCase() as UserRole;
+
+    
+    if (!email || !password) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+    
+    if (!EMAIL_REGEX.test(email)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
+    
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      return res
+      .status(400)
+      .json({ message: "Password must be at least 6 characters" });
+    }
+    
     // now we validate the role against USER_ROLES
-
+    console.log(role);
+    console.log(normalizedRole);
+    
     // ✅ ROLE VALIDATION (CORRECT)
-    if (!USER_ROLES.includes(role)) {
+    if (!USER_ROLES.includes(normalizedRole)) {
       return res.status(400).json({
         message: `Invalid role. Allowed: ${USER_ROLES.join(", ")}`,
       });
     }
 
-    if (!email || !password) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
-
-    if (!EMAIL_REGEX.test(email)) {
-      return res.status(400).json({ message: "Invalid email format" });
-    }
-
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      return res
-        .status(400)
-        .json({ message: "Password must be at least 6 characters" });
-    }
-   
-    const user = await authService.register(email, password, role);
+    const user = await authService.register(email, password, normalizedRole);
     return res.status(201).json(user);
   } catch (error: any) {
     console.error("Register error:", error);
