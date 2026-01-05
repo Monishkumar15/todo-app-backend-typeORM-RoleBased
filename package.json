@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon src/server.ts",
+    "dev": "nodemon --watch src --exec ts-node src/server.ts",
+    "debug": "nodemon --watch src --exec \"node --inspect=9229 -r ts-node/register src/server.ts\"",
     "build": "tsc",
     "start": "node dist/server.js"
   },

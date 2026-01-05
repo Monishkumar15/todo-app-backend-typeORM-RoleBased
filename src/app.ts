@@ -7,14 +7,25 @@ import groupRoutes from "./routes/group.routes";
 import adminRoutes from "./routes/admin.routes";
 // import { errorMiddleware } from "./middleware/error.middleware";
 import { swaggerSetup } from "./swagger";
+import { responseInterceptor } from "./interceptors/response.interceptor";
+import { loggerInterceptor } from "./interceptors/logger.interceptor";
+import { errorInterceptor } from "./interceptors/error.interceptor";
 
 const app = express();
 
 /* ---------------- GLOBAL MIDDLEWARE ---------------- */
 app.use(express.json());
 
+
 /* ---------------- SWAGGER ---------------- */
 swaggerSetup(app);
+
+//Interceptors
+// 🔁 Request interceptor
+app.use(loggerInterceptor);
+
+// 🔁 Response interceptor
+app.use(responseInterceptor);
 
 /* ---------------- BASE API ---------------- */
 app.use("/api/auth", authRoutes);
@@ -28,6 +39,7 @@ app.get("/api/health", (_req, res) => {
 });
 
 /* ---------------- ERROR HANDLER ---------------- */
-// app.use(errorMiddleware);
+// ERROR INTERCEPTOR MUST BE LAST
+app.use(errorInterceptor);
 
 export default app;

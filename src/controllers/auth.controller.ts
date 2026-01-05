@@ -1,69 +1,71 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { AuthService } from "../services/auth.service";
 import { AuthRequest } from "../middleware/auth.middleware";
 import { USER_ROLES, UserRole } from "../utils/roles";
+import { BadRequest } from "../utils/errors";
 
 const authService = new AuthService();
+
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 6;
 
-export const register = async (req: AuthRequest, res: Response) => {
+export const register = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const { email, password, role = "USER" } = req.body;
 
-
     const normalizedRole = role.toUpperCase() as UserRole;
 
-    
+    // 🔹 Validations
     if (!email || !password) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
-    
-    if (!EMAIL_REGEX.test(email)) {
-      return res.status(400).json({ message: "Invalid email format" });
-    }
-    
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      return res
-      .status(400)
-      .json({ message: "Password must be at least 6 characters" });
-    }
-    
-    // now we validate the role against USER_ROLES
-    console.log(role);
-    console.log(normalizedRole);
-    
-    // ✅ ROLE VALIDATION (CORRECT)
-    if (!USER_ROLES.includes(normalizedRole)) {
-      return res.status(400).json({
-        message: `Invalid role. Allowed: ${USER_ROLES.join(", ")}`,
-      });
+      throw BadRequest("All fields are required");
     }
 
-    const user = await authService.register(email, password, normalizedRole);
-    return res.status(201).json(user);
-  } catch (error: any) {
-    console.error("Register error:", error);
-    return res
-      .status(error.status || 500)
-      .json({ message: error.message || "Server error" });
+    if (!EMAIL_REGEX.test(email)) {
+      throw BadRequest("Invalid email format");
+    }
+
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      throw BadRequest("Password must be at least 6 characters");
+    }
+
+    if (!USER_ROLES.includes(normalizedRole)) {
+      throw BadRequest(
+        `Invalid role. Allowed: ${USER_ROLES.join(", ")}`
+      );
+    }
+
+    const user = await authService.register(
+      email,
+      password,
+      normalizedRole
+    );
+
+    return res.status(201).json({
+      success: true,
+      data: user,
+    });
+  } catch (error) {
+    // ✅ Pass error to global interceptor
+    next(error);
   }
 };
 
-export const login = async (req: Request, res: Response) => {
+export const login = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ message: "Email and password required" });
+      throw BadRequest("Email and password required");
     }
 
     const data = await authService.login(email, password);
+
     return res.status(200).json(data);
-  } catch (error: any) {
-    console.error("Login error:", error);
-    return res
-      .status(error.status || 500)
-      .json({ message: error.message || "Server error" });
+  } catch (error) {
+    next(error);
   }
 };

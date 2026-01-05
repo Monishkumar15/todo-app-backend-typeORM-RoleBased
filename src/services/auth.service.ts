@@ -3,6 +3,7 @@ import { User, UserRoleEnum } from "../entities/User";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env";
+import { Conflict, Forbidden, BadRequest } from "../utils/errors";
 
 export class AuthService {
   private userRepo = AppDataSource.getRepository(User);
@@ -13,9 +14,9 @@ export class AuthService {
     role: "USER" | "ADMIN"
   ) {
     const existingUser = await this.userRepo.findOne({ where: { email } });
-
+    //  debugger;
     if (existingUser) {
-      throw { status: 409, message: "Email already exists" };
+      throw Conflict("Email already exists");
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -23,14 +24,15 @@ export class AuthService {
     const user = this.userRepo.create({
       email,
       password: hashedPassword,
-      role: role === "ADMIN"
+      role:
+        role === "ADMIN"
           ? UserRoleEnum.ADMIN
           : UserRoleEnum.USER,
       isActive: true,
     });
 
     await this.userRepo.save(user);
-
+    
     return {
       id: user.id,
       email: user.email,
@@ -39,20 +41,23 @@ export class AuthService {
   }
 
   async login(email: string, password: string) {
-    const user = await this.userRepo.findOne({ where: { email }, select: ["id", "email", "password", "role", "isActive"] });
+    const user = await this.userRepo.findOne({
+      where: { email },
+      select: ["id", "email", "password", "role", "isActive"],
+    });
 
-    // Same error message → no info leakage
+    // Same message → avoid info leakage
     if (!user) {
-      throw { status: 401, message: "Invalid credentials" };
+      throw BadRequest("Invalid credentials");
     }
 
     if (!user.isActive) {
-      throw { status: 403, message: "Account is deactivated" };
+      throw Forbidden("Account is deactivated");
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      throw { status: 401, message: "Invalid password credentials" };
+      throw BadRequest("Invalid credentials");
     }
 
     const token = jwt.sign(
@@ -61,9 +66,6 @@ export class AuthService {
       { expiresIn: env.JWT_EXPIRES_IN }
     );
 
-    return {
-      token,
-      
-    };
+    return { token };
   }
 }

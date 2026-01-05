@@ -1,11 +1,11 @@
-import { Response } from "express";
+import { NextFunction, Response } from "express";
 import { AuthRequest } from "../middleware/auth.middleware";
 import { TaskService } from "../services/task.service";
 
 
 const taskService = new TaskService();
 
-export const createTask = async (req: AuthRequest, res: Response) => {
+export const createTask = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { title, description, status, groupId } = req.body;
 
@@ -30,12 +30,12 @@ export const createTask = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const getTasks = async (req: AuthRequest, res: Response) => {
+export const getTasks = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const tasks = await taskService.getTasks(req.userId!  );
     return res.status(200).json(tasks);
-  } catch {
-    return res.status(500).json({ message: "Failed to fetch tasks" });
+  } catch (error) {
+   next(error);
   }
 };
 
