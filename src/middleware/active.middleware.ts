@@ -2,6 +2,7 @@ import {Response, NextFunction } from "express";
 import { AuthRequest } from "./auth.middleware";
 import { AppDataSource } from "../config/data-source";
 import { User } from "../entities/User";
+import { Forbidden, Unauthorized } from "../utils/errors";
 
 
 export const activeMiddleware = async (
@@ -14,7 +15,7 @@ export const activeMiddleware = async (
     const userId = req.userId;
 
     if (!userId) {
-      return res.status(401).json({ message: "Unauthorized" });
+      throw Unauthorized("Authentication required - user ID missing");
     }
 
     const userRepo = AppDataSource.getRepository(User);
@@ -23,13 +24,11 @@ export const activeMiddleware = async (
     });
 
     if (!user) {
-      return res.status(401).json({ message: "Unauthorized" });
+      throw Unauthorized("Unauthorized");
     }
 
     if (!user.isActive) {
-      return res.status(403).json({
-        message: "Your account has been deactivated. Please contact admin.",
-      });
+      throw Forbidden("Your account has been deactivated. Please contact admin.");
     }
 
     // Attach full user (optional but useful)
@@ -38,6 +37,6 @@ export const activeMiddleware = async (
     next();
   } catch (error) {
     console.error("Active middleware error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };

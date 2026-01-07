@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env";
 import { User } from "../entities/User";
+import { Unauthorized } from "../utils/errors";
 
 export interface AuthRequest extends Request {
   userId?: number;
@@ -28,7 +29,8 @@ export const authMiddleware = (
     req.role = decoded.role;
     next();
   } catch {
-    return res.status(401).json({ message: "Invalid token" });
+    throw Unauthorized("Invalid or expired token");
+    // return res.status(401).json({ message: "Unauthorized" });
   }
 };
  
