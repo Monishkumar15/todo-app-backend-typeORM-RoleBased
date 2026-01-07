@@ -14,7 +14,8 @@ import { errorInterceptor } from "./interceptors/error.interceptor";
 const app = express();
 
 /* ---------------- GLOBAL MIDDLEWARE ---------------- */
-app.use(express.json());
+app.disable("etag"); // Disable etag for all responses to prevent caching issues
+app.use(express.json());      // Parse JSON request bodies  
 
 
 /* ---------------- SWAGGER ---------------- */

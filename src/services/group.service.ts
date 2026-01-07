@@ -2,6 +2,7 @@ import { AppDataSource } from "../config/data-source";
 import { TaskGroup } from "../entities/TaskGroup";
 import { Task } from "../entities/Task";
 import { User } from "../entities/User";
+import { NotFound, Forbidden, BadRequest, Conflict } from "../utils/errors";
 
 export class GroupService {
   private groupRepo = AppDataSource.getRepository(TaskGroup);
@@ -10,7 +11,7 @@ export class GroupService {
 
   async createGroup(name: string, userId: number) {
     const user = await this.userRepo.findOneBy({ id: userId });
-    if (!user) throw new Error("USER_NOT_FOUND");
+    if (!user) throw NotFound("User not found");
 
     const group = this.groupRepo.create({ name, user });
     const savedGroup = await this.groupRepo.save(group);
@@ -49,7 +50,7 @@ export class GroupService {
 
     if (!group) return null;
 
-    if (group.user.id !== userId) throw new Error("FORBIDDEN");
+    if (group.user.id !== userId) throw Forbidden("FORBIDDEN");
 
     return group;
   }
@@ -61,7 +62,7 @@ export class GroupService {
     });
 
     if (!group) return null;
-    if (group.user.id !== userId) throw new Error("FORBIDDEN");
+    if (group.user.id !== userId) throw Forbidden("FORBIDDEN");
 
     return {
       groupId: group.id,
@@ -106,30 +107,32 @@ export class GroupService {
       relations: ["user", "group"],
     });
 
-    if (!task) throw new Error("TASK_NOT_FOUND");
-    if (task.user.id !== userId) throw new Error("FORBIDDEN");
+    if (!task) throw NotFound("Task not found");
+    if (task.user.id !== userId) throw Forbidden("FORBIDDEN");
 
     // ✅ IMPORTANT CHECK
     if (task.group && task.group.id === groupId) {
-      throw new Error("TASK_ALREADY_IN_GROUP");
+      throw Conflict("Task already added in this group");
     }
 
     // 3. Attach task to group
     task.group = group;
     await this.taskRepo.save(task);
 
-    // 4. Reload group with tasks
-    const updatedGroup = await this.groupRepo.findOne({
-      where: { id: groupId },
-      relations: ["tasks"],
-    });
+    // // 4. Reload group with tasks
+    // const updatedGroup = await this.groupRepo.findOne({
+    //   where: { id: groupId },
+    //   relations: ["tasks"],
+    // });
 
-    // 5. Return mapped response
-    return {
-      groupId: updatedGroup!.id,
-      groupName: updatedGroup!.name,
-      tasks: updatedGroup!.tasks.map((t) => this.mapTask(t)),
-    };
+    // // 5. Return mapped response
+    // return {
+    //   groupId: updatedGroup!.id,
+    //   groupName: updatedGroup!.name,
+    //   tasks: updatedGroup!.tasks.map((t) => this.mapTask(t)),
+    // };
+
+    return this.getGroupById(groupId, userId)
   }
 
   async removeTaskFromGroup(groupId: number, taskId: number, userId: number) {
@@ -141,29 +144,30 @@ export class GroupService {
       relations: ["user", "group"],
     });
 
-    if (!task) throw new Error("TASK_NOT_FOUND");
-    if (task.user.id !== userId) throw new Error("FORBIDDEN");
+    if (!task) throw NotFound("Task not found");
+    if (task.user.id !== userId) throw Forbidden("FORBIDDEN");
     if (!task.group || task.group.id !== groupId)
-      throw new Error("TASK_NOT_IN_GROUP");
+      throw BadRequest("Task not in this group");
 
     task.group = null;
     await this.taskRepo.save(task);
 
-    // Reload updated group
-    const updatedGroup = await this.groupRepo.findOne({
-      where: { id: groupId },
-      relations: ["tasks"],
-    });
-    return {
-      groupId: updatedGroup!.id,
-      groupName: updatedGroup!.name,
-      tasks: updatedGroup!.tasks.map((t) => this.mapTask(t)),
-    };
+    // // Reload updated group
+    // const updatedGroup = await this.groupRepo.findOne({
+    //   where: { id: groupId },
+    //   relations: ["tasks"],
+    // });
+    // return {
+    //   groupId: updatedGroup!.id,
+    //   groupName: updatedGroup!.name,
+    //   tasks: updatedGroup!.tasks.map((t) => this.mapTask(t)),
+    // };
+    return this.getGroupById(groupId, userId);
   }
 
   async moveTasksBetweenGroups(fromGroupId: number,toGroupId: number,userId: number) {
     if (fromGroupId === toGroupId) {
-      throw new Error("SAME_GROUP");
+      throw BadRequest("Cannot move tasks to the same group");
     }
 
     const userGroups = await this.groupRepo.find({
@@ -171,7 +175,7 @@ export class GroupService {
     });
 
     if (userGroups.length < 2) {
-      throw new Error("MIN_TWO_GROUPS_REQUIRED");
+      throw BadRequest("At least two groups are required to move tasks");
     }
 
     const fromGroup = await this.groupRepo.findOne({
@@ -185,15 +189,15 @@ export class GroupService {
     });
 
     if (!fromGroup || !toGroup) {
-      throw new Error("GROUP_NOT_FOUND");
+      throw BadRequest("Group not found");
     }
 
     if (fromGroup.user.id !== userId || toGroup.user.id !== userId) {
-      throw new Error("FORBIDDEN");
+      throw Forbidden("Forbidden");
     }
 
     if (fromGroup.tasks.length === 0) {
-      throw new Error("NO_TASKS_TO_MOVE");
+      throw Conflict("No tasks to move in the source group");
     }
 
     // 🔁 Move tasks
@@ -249,19 +253,19 @@ export class GroupService {
   }
 
   async moveSingleTaskBetweenGroups(fromGroupId: number, toGroupId: number, taskId: number, userId: number) {
-  if (fromGroupId === toGroupId) throw new Error("SAME_GROUP");
+  if (fromGroupId === toGroupId) throw BadRequest("Cannot move tasks within same group");
 
   // Ensure user has at least 2 groups
   const groupCount = await this.groupRepo.count({
     where: { user: { id: userId } },
   });
-  if (groupCount < 2) throw new Error("ONLY_ONE_GROUP");
+  if (groupCount < 2) throw BadRequest("At least two groups are required");
 
   // Fetch both groups
   const fromGroup = await this.getGroupEntity(fromGroupId, userId);
   const toGroup = await this.getGroupEntity(toGroupId, userId);
 
-  if (!fromGroup || !toGroup) throw new Error("GROUP_NOT_FOUND");
+  if (!fromGroup || !toGroup) throw NotFound("Group not found");
 
   // Fetch task
   const task = await this.taskRepo.findOne({
@@ -269,12 +273,11 @@ export class GroupService {
     relations: ["user", "group"],
   });
 
-  if (!task) throw new Error("TASK_NOT_FOUND");
-  if (task.user.id !== userId) throw new Error("FORBIDDEN");
+  if (!task) throw NotFound("Task not found");
+  if (task.user.id !== userId) throw Forbidden("Forbidden");
 
   if (!task.group || task.group.id !== fromGroupId)
-    throw new Error("TASK_NOT_IN_GROUP");
-
+    throw BadRequest("Task not in this group");
   // Move task
   task.group = toGroup;
   await this.taskRepo.save(task);
@@ -300,11 +303,11 @@ async removeAllTasksFromGroup(groupId: number, userId: number) {
   });
 
   if (!group) return null;
-  if (group.user.id !== userId) throw new Error("FORBIDDEN");
+  if (group.user.id !== userId) throw Forbidden("FORBIDDEN");
 
   // 2️⃣ Check tasks exist
   if (group.tasks.length === 0) {
-    throw new Error("NO_TASKS_IN_GROUP");
+    throw BadRequest("No tasks in group");
   }
 
   // 3️⃣ Remove group reference from all tasks

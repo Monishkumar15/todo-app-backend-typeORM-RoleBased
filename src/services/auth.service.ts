@@ -3,7 +3,7 @@ import { User, UserRoleEnum } from "../entities/User";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env";
-import { Conflict, Forbidden, BadRequest } from "../utils/errors";
+import { Conflict, Forbidden, BadRequest, Unauthorized } from "../utils/errors";
 
 export class AuthService {
   private userRepo = AppDataSource.getRepository(User);
@@ -48,7 +48,7 @@ export class AuthService {
 
     // Same message → avoid info leakage
     if (!user) {
-      throw BadRequest("Invalid credentials");
+      throw Unauthorized("Invalid credentials");
     }
 
     if (!user.isActive) {
@@ -57,7 +57,7 @@ export class AuthService {
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      throw BadRequest("Invalid credentials");
+      throw Unauthorized("Invalid credentials");
     }
 
     const token = jwt.sign(

@@ -45,8 +45,7 @@ export const register = async (
     );
 
     return res.status(201).json({
-      success: true,
-      data: user,
+      user,
     });
   } catch (error) {
     // ✅ Pass error to global interceptor

@@ -2,6 +2,8 @@ import { AppDataSource } from "../config/data-source";
 import { Task } from "../entities/Task";
 import { User } from "../entities/User";
 import { TaskGroup } from "../entities/TaskGroup";
+import { BadRequest, Forbidden, NotFound, Unauthorized } from "../utils/errors";
+import { Not } from "typeorm";
 
 const VALID_STATUS = ["todo", "in-progress", "done"];
 
@@ -17,20 +19,20 @@ export class TaskService {
     status: string = "todo",
     groupId?: number
   ) {
-    if (!VALID_STATUS.includes(status)) {
-      throw { status: 400, message: "Invalid status" };
+    if (!VALID_STATUS.includes(status as any)) {
+      throw BadRequest("Invalid status");
     }
 
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) {
-      throw { status: 401, message: "Unauthorized" };
+      throw Unauthorized("Unauthorized");
     }
 
     let group = null;
     if (groupId) {
       group = await this.groupRepo.findOne({ where: { id: groupId } });
       if (!group) {
-        throw { status: 404, message: "Group not found" };
+        throw NotFound("Group not found");
       }
     }
 
@@ -67,14 +69,11 @@ export class TaskService {
     });
 
     if (!task) {
-      throw { status: 404, message: "Task not found" };
+      throw NotFound("Task not found");
     }
 
     if (task.user.id !== userId) {
-      throw {
-        status: 403,
-        message: "Forbidden: You are not allowed to access this task",
-      };
+      throw Forbidden("Forbidden: You are not allowed to access this task");
     }
 
     /** return {
@@ -103,8 +102,8 @@ export class TaskService {
   async updateTask(taskId: number, userId: number, data: Partial<Task>) {
     const task = await this.getTaskById(taskId, userId);
 
-    if (data.status && !VALID_STATUS.includes(data.status)) {
-      throw { status: 400, message: "Invalid status" };
+    if (data.status && !VALID_STATUS.includes(data.status as any)) {
+      throw BadRequest("Invalid status");
     }
 
     Object.assign(task, data);
@@ -123,14 +122,18 @@ export class TaskService {
   //   await this.taskRepo.remove(task);
   // }
   async deleteTask(taskId: number, userId: number) {
-    const result = await this.taskRepo.delete({
-      id: taskId,
-      user: { id: userId },
-    });
+    const result = await this.taskRepo.findOne({
+      where: { id: taskId },
+      relations: { user: true },});
 
-    if (result.affected === 0) {
-      throw { status: 404, message: "Task not found" };
+    if(!result){
+      throw NotFound("Task not found");
     }
+
+    if(result.user.id !== userId){
+      throw Forbidden("Forbidden: You are not allowed to delete this task");
+    }
+    await this.taskRepo.remove(result);
   }
   
   private mapTask(task: Task) {

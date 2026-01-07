@@ -12,5 +12,8 @@ export const BadRequest = (message: string) =>
 export const Conflict = (message: string) =>
   new AppError(message, 409);
 
+export const Unauthorized = (message: string) =>
+  new AppError(message, 401);
+
 export const InternalServerError = (message = "Internal server error") =>
   new AppError(message, 500);
