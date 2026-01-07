@@ -2,32 +2,40 @@ import { AppDataSource } from "../config/data-source";
 import { Task } from "../entities/Task";
 import { User } from "../entities/User";
 import { TaskGroup } from "../entities/TaskGroup";
+import { TaskStatus } from "../entities/TaskStatus";
 import { BadRequest, Forbidden, NotFound, Unauthorized } from "../utils/errors";
 import { Not } from "typeorm";
 
-const VALID_STATUS = ["todo", "in-progress", "done"];
 
 export class TaskService {
   private taskRepo = AppDataSource.getRepository(Task);
   private userRepo = AppDataSource.getRepository(User);
   private groupRepo = AppDataSource.getRepository(TaskGroup);
+  private statusRepo = AppDataSource.getRepository(TaskStatus);
+
 
   async createTask(
     userId: number,
     title: string,
     description?: string,
-    status: string = "todo",
+    statusCode: string = "TODO",
     groupId?: number
   ) {
-    if (!VALID_STATUS.includes(status as any)) {
-      throw BadRequest("Invalid status");
-    }
 
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) {
       throw Unauthorized("Unauthorized");
     }
 
+    const status = await this.statusRepo.findOne({
+    where: { statusCode, isActive: true },
+  });
+
+  if (!status) {
+    throw BadRequest("Invalid or inactive task status");
+  }
+
+    // let group: TaskGroup | null = null;
     let group = null;
     if (groupId) {
       group = await this.groupRepo.findOne({ where: { id: groupId } });
@@ -39,7 +47,7 @@ export class TaskService {
     const task = this.taskRepo.create({
       title,
       description,
-      status: status as "todo" | "in-progress" | "done",
+      status,
       user,
       group,
     });
@@ -51,7 +59,7 @@ export class TaskService {
   async getTasks(userId: number) {
     const tasks = await this.taskRepo.find({
       where: { user: { id: userId } },
-      relations: ["group"],
+      relations: ["group", "status"],
       order: {
         id: "ASC", // task order
       },
@@ -65,7 +73,7 @@ export class TaskService {
       where: {
         id: taskId,
       },
-      relations: { user: true, group: true },
+      relations: { user: true, group: true , status: true},
     });
 
     if (!task) {
@@ -100,22 +108,47 @@ export class TaskService {
   }
 
   async updateTask(taskId: number, userId: number, data: Partial<Task>) {
-    const task = await this.getTaskById(taskId, userId);
+  const task = await this.taskRepo.findOne({
+    where: { id: taskId },
+    relations: { user: true, group: true, status: true },
+  });
 
-    if (data.status && !VALID_STATUS.includes(data.status as any)) {
-      throw BadRequest("Invalid status");
-    }
+  if (!task) {
+    throw NotFound("Task not found");
+  }
 
-    Object.assign(task, data);
-     await this.taskRepo.save(task);
+  if (task.user.id !== userId) {
+    throw Forbidden("Forbidden: You are not allowed to access this task");
+  }
 
-    const updated = await this.taskRepo.findOne({
-      where: { id: task.id },
-      relations: { group: true },
+  if (data.status) {
+    const statusCode =
+      typeof data.status === "string"
+        ? data.status
+        : data.status.statusCode;
+
+    const status = await this.statusRepo.findOne({
+      where: { statusCode, isActive: true },
     });
 
-    return this.mapTask(updated!);
+    if (!status) {
+      throw BadRequest("Invalid or inactive task status");
+    }
+
+    task.status = status;
   }
+
+  Object.assign(task, data);
+  await this.taskRepo.save(task);
+
+  const updated = await this.taskRepo.findOne({
+    where: { id: task.id },
+    relations: { group: true, status: true },
+  });
+
+  return this.mapTask(updated!);
+}
+
 
   // async deleteTask(taskId: number, userId: number) {
   //   const task = await this.getTaskById(taskId, userId);
@@ -141,7 +174,8 @@ export class TaskService {
       id: task.id,
       title: task.title,
       description: task.description,
-      status: task.status,
+      statusCode: task.status?.statusCode ?? null,
+      statusName: task.status?.statusName ?? null,
       groupId: task.group?.id ?? null,
       groupName: task.group?.name ?? null,
     };

@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from "typeorm";
 import { User } from "./User";
 import { TaskGroup } from "./TaskGroup";
+import { TaskStatus } from "./TaskStatus";
 
 @Entity()
 export class Task {
@@ -13,12 +14,9 @@ export class Task {
   @Column({ nullable: true })
   description!: string;
 
-  @Column({
-    type: "enum",
-    enum: ["todo", "in-progress", "done"],
-    default: "todo",
-  })
-  status!: "todo" | "in-progress" | "done";
+  @ManyToOne(() => TaskStatus)
+  @JoinColumn({ name: "statusCode", referencedColumnName: "statusCode" })
+  status!: TaskStatus;
 
   @ManyToOne(() => User, user => user.tasks)
   user!: User;

@@ -19,7 +19,7 @@ export const register = async (
 
     const normalizedRole = role.toUpperCase() as UserRole;
 
-    // 🔹 Validations
+    //  Validate the email and password
     if (!email || !password) {
       throw BadRequest("All fields are required");
     }

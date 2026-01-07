@@ -1,33 +1,39 @@
 import { AppDataSource } from "../config/data-source";
-import { User, UserRoleEnum } from "../entities/User";
+import { User} from "../entities/User";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env";
 import { Conflict, Forbidden, BadRequest, Unauthorized } from "../utils/errors";
+import { Role } from "../entities/Role";
 
 export class AuthService {
   private userRepo = AppDataSource.getRepository(User);
+  private roleRepo = AppDataSource.getRepository(Role);
 
   async register(
     email: string,
     password: string,
-    role: "USER" | "ADMIN"
+    roleCode  : string
   ) {
     const existingUser = await this.userRepo.findOne({ where: { email } });
     //  debugger;
     if (existingUser) {
       throw Conflict("Email already exists");
     }
+    const role = await this.roleRepo.findOne({
+      where: { roleCode, isActive: true },
+    });
 
+    if (!role) {
+      throw BadRequest("Invalid or inactive role");
+    }
+    
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = this.userRepo.create({
       email,
       password: hashedPassword,
-      role:
-        role === "ADMIN"
-          ? UserRoleEnum.ADMIN
-          : UserRoleEnum.USER,
+      role,
       isActive: true,
     });
 
@@ -36,14 +42,15 @@ export class AuthService {
     return {
       id: user.id,
       email: user.email,
-      role: user.role,
+      role: role.roleCode,
     };
   }
 
   async login(email: string, password: string) {
     const user = await this.userRepo.findOne({
       where: { email },
-      select: ["id", "email", "password", "role", "isActive"],
+      relations: ["role"],
+      select: {id: true, email: true, password: true, isActive: true, role: { roleCode: true }  },
     });
 
     // Same message → avoid info leakage
@@ -61,7 +68,7 @@ export class AuthService {
     }
 
     const token = jwt.sign(
-      { userId: user.id, role: user.role },
+      { userId: user.id, role: user.role.roleCode },
       env.JWT_SECRET,
       { expiresIn: env.JWT_EXPIRES_IN }
     );

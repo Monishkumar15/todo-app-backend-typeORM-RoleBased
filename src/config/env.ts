@@ -19,7 +19,7 @@ export const env = {
   DB_PORT: Number(process.env.DB_PORT) || 5432,
   DB_USERNAME: process.env.DB_USERNAME || "postgres",
   DB_PASSWORD: process.env.DB_PASSWORD || "root",
-  DB_NAME: process.env.DB_NAME || "todo2_db",
+  DB_NAME: process.env.DB_NAME || "todo_v2.1_db",
   JWT_SECRET: process.env.JWT_SECRET || "secret",
    JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN as SignOptions["expiresIn"],
 };

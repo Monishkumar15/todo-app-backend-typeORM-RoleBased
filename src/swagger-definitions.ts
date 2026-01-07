@@ -11,13 +11,19 @@
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - email
+ *               - password
  *             properties:
  *               email:
  *                 type: string
+ *                 example: user@mail.com
  *               password:
  *                 type: string
+ *                 example: password123
  *               role:
  *                 type: string
+ *                 example: USER
  *     responses:
  *       201:
  *         description: User registered successfully
@@ -25,8 +31,9 @@
  *         description: Validation error
  */
 
+
 /**
- * @swagger
+ * @openapi
  * /api/auth/login:
  *   post:
  *     summary: Login and receive JWT
@@ -44,14 +51,17 @@
  *             properties:
  *               email:
  *                 type: string
+ *                 example: user@gmail.com
  *               password:
  *                 type: string
+ *                 example: password123
  *     responses:
  *       200:
  *         description: Login successful
  *       401:
  *         description: Invalid credentials
  */
+
 
 /**
  * @openapi

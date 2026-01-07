@@ -1,12 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, JoinColumn } from "typeorm";
 import { Task } from "./Task";
 import { TaskGroup } from "./TaskGroup";
-
-// export type UserRole = "ADMIN" | "USER";
-export enum UserRoleEnum {
-  USER = "USER",
-  ADMIN = "ADMIN",
-}
+import { Role } from "./Role";
 
 
 @Entity()
@@ -21,12 +16,9 @@ export class User {
   @Column({ select: false })
   password!: string;
 
-  @Column({
-  type: "enum",
-  enum: UserRoleEnum,
-  default: UserRoleEnum.USER,
-})
-  role!: UserRoleEnum;
+  @ManyToOne(() => Role)
+  @JoinColumn({ name: "roleCode", referencedColumnName: "roleCode" })
+  role!: Role;
 
   @Column({ default: true })
   isActive!: boolean;

@@ -21,10 +21,11 @@ export const activeMiddleware = async (
     const userRepo = AppDataSource.getRepository(User);
     const user = await userRepo.findOne({
       where: { id: userId },
+      relations: ["role"],
     });
 
     if (!user) {
-      throw Unauthorized("Unauthorized");
+      throw Unauthorized("Unauthorized: User not found");
     }
 
     if (!user.isActive) {
@@ -33,6 +34,7 @@ export const activeMiddleware = async (
 
     // Attach full user (optional but useful)
     req.user = user;
+    req.roleCode = user.role.roleCode;
 
     next();
   } catch (error) {

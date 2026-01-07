@@ -11,7 +11,7 @@ export const createTask = async (
   next: NextFunction
 ) => {
   try {
-    const { title, description, status, groupId } = req.body;
+    const { title, description, statusCode, groupId } = req.body;
 
     if (!title) {
       throw BadRequest("Title is required");
@@ -25,7 +25,7 @@ export const createTask = async (
       req.userId!,
       title,
       description,
-      status,
+        statusCode,
       groupId
     );
 
@@ -82,7 +82,7 @@ export const updateTask = async (
     if (req.body.id && Number(req.body.id) !== taskId) {
       throw BadRequest("Task ID mismatch between URL and body");
     }
-    // 🔥 STRIP ID FROM BODY
+    //  STRIP ID FROM BODY
     delete req.body.id;
 
     const task = await taskService.updateTask(taskId, req.userId!, req.body);

@@ -6,7 +6,7 @@ import { Unauthorized } from "../utils/errors";
 
 export interface AuthRequest extends Request {
   userId?: number;
-  role?: "USER" | "ADMIN";
+  roleCode?: string;
   user?: User;
 }
 
@@ -17,16 +17,22 @@ export const authMiddleware = (
   res: Response,
   next: NextFunction
 ) => {
-  const token = req.headers.authorization?.split(" ")[1];
-  if (!token) return res.status(401).json({ message: "Unauthorized" });
+  const authHeader = req.headers.authorization;
+
+  // ! Check Authorization header
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    throw Unauthorized("Authorization token missing");
+  }
+
+  const token = authHeader.split(" ")[1];
 
   try {
     const decoded = jwt.verify(token, env.JWT_SECRET) as {
       userId: number;
-      role: "USER" | "ADMIN";
+      roleCode: string;
     };
     req.userId = decoded.userId;
-    req.role = decoded.role;
+    req.roleCode = decoded.roleCode;
     next();
   } catch {
     throw Unauthorized("Invalid or expired token");
