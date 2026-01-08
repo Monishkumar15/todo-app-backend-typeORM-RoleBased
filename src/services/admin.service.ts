@@ -1,21 +1,19 @@
 import { AppDataSource } from "../config/data-source";
 import { User } from "../entities/User";
+import { Forbidden } from "../utils/errors";
 
 export class AdminService {
   private userRepo = AppDataSource.getRepository(User);
 
-  /**
-   * GET ALL USERS (Basic Info)
-   */
+// GET ALL USERS (Basic Info)
   async getAllUsers() {
     return this.userRepo.find({
       select: ["id", "email", "role", "isActive",],
+      relations: { role: true },
     });
   }
 
-  /**
-   * GET USER FULL OVERVIEW (Groups + Tasks)
-   */
+  // GET USER FULL OVERVIEW (Groups + Tasks)
   async getUserOverview(userId: number) {
     return this.userRepo.findOne({
       where: { id: userId },
@@ -24,21 +22,17 @@ export class AdminService {
         tasks: true,
       },
       tasks: true,
+      role: true,
     },
     });
   }
-  /**
-   *  relations: [
-        "taskGroups",
-        "taskGroups.tasks",
-        "tasks",
-      ],
-   */
+  
+  // ACTIVATE / DEACTIVATE USER
+  async updateUserStatus(userId: number, isActive: boolean, adminId?: number) {
+    if (userId === adminId) {
+    throw Forbidden("Admin cannot deactivate own account");
+  }
 
-  /**
-   * ACTIVATE / DEACTIVATE USER
-   */
-  async updateUserStatus(userId: number, isActive: boolean) {
     const user = await this.userRepo.findOneBy({ id: userId });
     if (!user) return null;
 

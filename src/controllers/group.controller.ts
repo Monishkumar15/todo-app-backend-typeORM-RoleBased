@@ -1,14 +1,12 @@
 import { NextFunction, Response } from "express";
 import { AuthRequest } from "../middleware/auth.middleware";
 import { GroupService } from "../services/group.service";
-import { BadRequest, NotFound } from "../utils/errors";
+import { BadRequest, NotFound, Unauthorized } from "../utils/errors";
 
 
 const groupService = new GroupService();
 
-/**
- * CREATE GROUP
- */
+// CREATE GROUP
 export const createGroup = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { name } = req.body;
@@ -24,11 +22,13 @@ export const createGroup = async (req: AuthRequest, res: Response, next: NextFun
   }
 };
 
-/**
- * GET ALL GROUPS
- */
+// GET ALL GROUPS
+
 export const getGroups = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+
+     if (!req.userId) throw Unauthorized("Authentication required");
+     
     const groups = await groupService.getGroups(req.user!.id);
     
     return res.status(200).json(groups);
@@ -37,13 +37,15 @@ export const getGroups = async (req: AuthRequest, res: Response, next: NextFunct
   }
 };
 
-/**
- * GET GROUP BY ID
- */
+// GET GROUP BY ID
 export const getGroupById = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+    const groupId = Number(req.params.id);
+    if (!req.userId) throw Unauthorized("Authentication required");
+    if (isNaN(groupId)) throw BadRequest("Invalid group ID");
+
     const group = await groupService.getGroupById(
-      Number(req.params.id),
+      groupId,
       req.user!.id
     );
 
@@ -56,17 +58,18 @@ export const getGroupById = async (req: AuthRequest, res: Response, next: NextFu
   }
 };
 
-/**
- * UPDATE GROUP
- */
+// UPDATE GROUP
 export const updateGroup = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+    const groupId = Number(req.params.id);
     const { name } = req.body;
+    if(!req.userId) throw Unauthorized("Authentication required");
+    if (isNaN(groupId)) throw BadRequest("Invalid group ID");
     if (!name)
       throw BadRequest("Group name is required");
 
     const group = await groupService.updateGroup(
-      Number(req.params.id),
+      groupId,
       name,
       req.user!.id
     );
@@ -80,13 +83,15 @@ export const updateGroup = async (req: AuthRequest, res: Response, next: NextFun
   }
 };
 
-/**
- * DELETE GROUP
- */
+//  DELETE GROUP
 export const deleteGroup = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+    const groupId = Number(req.params.id);
+    if (!req.userId) throw Unauthorized("Authentication required");
+    if (isNaN(groupId)) throw BadRequest("Invalid group ID");
+
     const result = await groupService.deleteGroup(
-      Number(req.params.id),
+      groupId,
       req.user!.id
     );
 
@@ -101,13 +106,13 @@ export const deleteGroup = async (req: AuthRequest, res: Response, next: NextFun
 };
 
 
-/**
- * ADD TASK TO GROUP
- */
+// ADD TASK TO GROUP
 export const addTaskToGroup = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const groupId = Number(req.params.groupId);
     const taskId = Number(req.params.taskId);
+
+    if (!req.userId) throw Unauthorized("Authentication required");
 
     if (isNaN(groupId) || isNaN(taskId)) {
       throw BadRequest("Invalid groupId or taskId");
@@ -128,9 +133,7 @@ export const addTaskToGroup = async (req: AuthRequest, res: Response, next: Next
   }
 };
 
-/**
- * REMOVE TASK FROM GROUP
- */
+// REMOVE TASK FROM GROUP
 export const removeTaskFromGroup = async (
   req: AuthRequest,
   res: Response,
@@ -140,6 +143,7 @@ export const removeTaskFromGroup = async (
     const groupId = Number(req.params.groupId);
     const taskId = Number(req.params.taskId);
 
+    if (!req.userId) throw Unauthorized("Authentication required");
     if (isNaN(groupId) || isNaN(taskId)) {
       throw BadRequest("Invalid groupId or taskId");
     }
@@ -159,6 +163,7 @@ export const removeTaskFromGroup = async (
   }
 };
 
+// Move tasks between groups
 export const moveTasksBetweenGroups = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const fromGroupId = Number(req.params.fromGroupId);
@@ -180,6 +185,7 @@ export const moveTasksBetweenGroups = async (req: AuthRequest, res: Response, ne
   }
 };
 
+// Move single task between groups
 export const moveSingleTaskBetweenGroups = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const fromGroupId = Number(req.params.fromGroupId);
@@ -187,6 +193,7 @@ export const moveSingleTaskBetweenGroups = async (req: AuthRequest, res: Respons
     const taskId = Number(req.params.taskId);
     const userId = req.user!.id;
 
+    if( !req.userId) throw Unauthorized("Authentication required");
     if (isNaN(fromGroupId) || isNaN(toGroupId) || isNaN(taskId)) {
       throw BadRequest("Invalid IDs provided");
     }
@@ -204,9 +211,11 @@ export const moveSingleTaskBetweenGroups = async (req: AuthRequest, res: Respons
   }
 };
 
+// Remove all tasks from a group
 export const removeAllTasksFromGroup = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const groupId = Number(req.params.groupId);
+    if (!req.userId) throw Unauthorized("Authentication required");
     if (isNaN(groupId)) {
       throw BadRequest("Invalid group ID");
     }

@@ -48,7 +48,6 @@ export const register = async (
       user,
     });
   } catch (error) {
-    // ✅ Pass error to global interceptor
     next(error);
   }
 };
@@ -62,8 +61,8 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     }
 
     const data = await authService.login(email, password);
-
     return res.status(200).json(data);
+    
   } catch (error) {
     next(error);
   }

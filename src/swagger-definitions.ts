@@ -17,7 +17,7 @@
  *             properties:
  *               email:
  *                 type: string
- *                 example: user@mail.com
+ *                 example: user@gmail.com
  *               password:
  *                 type: string
  *                 example: password123
@@ -65,7 +65,7 @@
 
 /**
  * @openapi
- * /api/tasks:
+ * /api/tasks/createTask:
  *   post:
  *     summary: Create a new task
  *     tags:
@@ -97,7 +97,7 @@
 
 /**
  * @openapi
- * /api/tasks:
+ * /api/tasks/getTasks:
  *   get:
  *     summary: Get all tasks for current user
  *     tags:
@@ -111,7 +111,7 @@
 
 /**
  * @openapi
- * /api/tasks/{id}:
+ * /api/tasks/getTaskById/{id}:
  *   get:
  *     summary: Get task by ID
  *     tags:
@@ -133,7 +133,7 @@
 
 /**
  * @openapi
- * /api/tasks/{id}:
+ * /api/tasks/updateTask/{id}:
  *   put:
  *     summary: Update task by ID
  *     tags:
@@ -166,7 +166,7 @@
 
 /**
  * @openapi
- * /api/tasks/{id}:
+ * /api/tasks/deleteTask/{id}:
  *   delete:
  *     summary: Delete task by ID
  *     tags:
@@ -186,7 +186,7 @@
 
 /**
  * @openapi
- * /api/groups:
+ * /api/groups/createGroup:
  *   post:
  *     summary: Create a new group
  *     tags:
@@ -211,7 +211,7 @@
 
 /**
  * @openapi
- * /api/groups:
+ * /api/groups/getGroups:
  *   get:
  *     summary: Get all groups for current user
  *     tags:
@@ -225,7 +225,7 @@
 
 /**
  * @openapi
- * /api/groups/{id}:
+ * /api/groups/getGroupById/{id}:
  *   get:
  *     summary: Get group by ID
  *     description: Get a specific group with its tasks. Only the group owner can access it.
@@ -258,7 +258,7 @@
 
 /**
  * @openapi
- * /api/groups/{id}:
+ * /api/groups/updateGroup/{id}:
  *   put:
  *     summary: Update group by ID
  *     tags:
@@ -288,7 +288,7 @@
 
 /**
  * @openapi
- * /api/groups/{id}:
+ * /api/groups/deleteGroup/{id}:
  *   delete:
  *     summary: Delete group by ID
  *     tags:
@@ -572,7 +572,7 @@
 
 /**
  * @openapi
- * /api/admin/users:
+ * /api/admin/users/getAllUsers:
  *   get:
  *     summary: Get all users (admin only)
  *     tags:
@@ -586,7 +586,7 @@
 
 /**
  * @openapi
- * /api/admin/users/{id}:
+ * /api/admin/users/getUserOverview/{id}:
  *   get:
  *     summary: Get user overview by ID
  *     tags:

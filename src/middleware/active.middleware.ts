@@ -33,8 +33,10 @@ export const activeMiddleware = async (
     }
 
     // Attach full user (optional but useful)
+    req.userId = user.id;
     req.user = user;
     req.roleCode = user.role.roleCode;
+    req.isActive = user.isActive;
 
     next();
   } catch (error) {

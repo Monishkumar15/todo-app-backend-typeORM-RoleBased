@@ -18,12 +18,11 @@ const router = Router();
 
 router.use(authMiddleware, activeMiddleware);
 
-router.post("/", createGroup);
-router.get("/", getGroups);
-router.get("/:id", getGroupById);
-router.put("/:id", updateGroup);
-router.delete("/:id", deleteGroup);
-
+router.post("/createGroup", createGroup);
+router.get("/getGroups", getGroups);
+router.get("/getGroupById/:id", getGroupById);
+router.put("/updateGroup/:id", updateGroup);
+router.delete("/deleteGroup/:id", deleteGroup);
 router.post("/:groupId/tasks/:taskId", addTaskToGroup);
 router.delete("/:groupId/tasks/:taskId", removeTaskFromGroup);
 router.post("/:fromGroupId/move/:toGroupId", moveTasksBetweenGroups);

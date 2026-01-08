@@ -8,11 +8,37 @@ export class GroupService {
   private groupRepo = AppDataSource.getRepository(TaskGroup);
   private taskRepo = AppDataSource.getRepository(Task);
   private userRepo = AppDataSource.getRepository(User);
+  
+  private async getGroupEntity(
+    groupId: number,
+    userId: number
+  ): Promise<TaskGroup | null> {
+    const group = await this.groupRepo.findOne({
+      where: { id: groupId },
+      relations: ["user", "tasks", "tasks.status"],
+    });
+    
+    if (!group) return null;
+    
+    if (group.user.id !== userId) throw Forbidden("FORBIDDEN");
+    
+    return group;
+  }
+  
+  private mapTask(task: Task) {
+    return {
+      taskId: task.id,
+      taskTitle: task.title,
+      taskDescription: task.description,
+      taskStatus: task.status?.statusCode ?? null
+    };
+  }
+
 
   async createGroup(name: string, userId: number) {
     const user = await this.userRepo.findOneBy({ id: userId });
     if (!user) throw NotFound("User not found");
-
+    
     const group = this.groupRepo.create({ name, user });
     const savedGroup = await this.groupRepo.save(group);
     return {
@@ -20,11 +46,11 @@ export class GroupService {
       groupName: savedGroup.name,
     };
   }
-
+  
   async getGroups(userId: number) {
     const groups = await this.groupRepo.find({
       where: { user: { id: userId } },
-      relations: ["tasks"],
+      relations: ["tasks", "tasks.status"],
       order: {
         id: "ASC", // group order
         tasks: {
@@ -32,45 +58,30 @@ export class GroupService {
         },
       },
     });
-
+    
     return groups.map((group) => ({
       groupId: group.id,
       groupName: group.name,
       tasks: group.tasks.map((task) => this.mapTask(task)),
     }));
   }
-  private async getGroupEntity(
-    groupId: number,
-    userId: number
-  ): Promise<TaskGroup | null> {
-    const group = await this.groupRepo.findOne({
-      where: { id: groupId },
-      relations: ["user", "tasks"],
-    });
-
-    if (!group) return null;
-
-    if (group.user.id !== userId) throw Forbidden("FORBIDDEN");
-
-    return group;
-  }
-
+  
   async getGroupById(groupId: number, userId: number) {
-    const group = await this.groupRepo.findOne({
-      where: { id: groupId },
-      relations: ["user", "tasks"],
-    });
 
+    const group = await this.groupRepo.findOne({
+    where: { id: groupId },
+    relations: ["user", "tasks", "tasks.status"], 
+  });
     if (!group) return null;
     if (group.user.id !== userId) throw Forbidden("FORBIDDEN");
-
+    
     return {
       groupId: group.id,
       groupName: group.name,
       tasks: group.tasks.map((task) => this.mapTask(task)),
     };
   }
-
+  
   async updateGroup(groupId: number, name: string, userId: number) {
     const group = await this.getGroupEntity(groupId, userId);
     if (!group) return null;
@@ -94,6 +105,8 @@ export class GroupService {
     // );
 
     return this.groupRepo.remove(group);
+    // await this.groupRepo.remove(group);
+    // return true;
   }
 
   async addTaskToGroup(groupId: number, taskId: number, userId: number) {
@@ -104,13 +117,11 @@ export class GroupService {
     // 2. Get task
     const task = await this.taskRepo.findOne({
       where: { id: taskId },
-      relations: ["user", "group"],
+      relations: ["user", "group", "status"],
     });
 
     if (!task) throw NotFound("Task not found");
     if (task.user.id !== userId) throw Forbidden("FORBIDDEN");
-
-    // ✅ IMPORTANT CHECK
     if (task.group && task.group.id === groupId) {
       throw Conflict("Task already added in this group");
     }
@@ -200,22 +211,13 @@ export class GroupService {
       throw Conflict("No tasks to move in the source group");
     }
 
-    // 🔁 Move tasks
+    //  Move tasks
     for (const task of fromGroup.tasks) {
-      // console.log(`Moving Task ID ${task.id} to Group ID ${toGroupId}`);
-      // console.log(`Before Move: Task Group ID: ${task.group ? task.group.id : 'null'}`);
-      // console.log(`From Group ID: ${fromGroupId}, To Group ID: ${toGroupId}`);
-      // console.log(`task.group ${task.group}  --- toGroup ${toGroup}`);
-      
-      // console.log('---');
-      
       task.group = toGroup;
-      // console.log(`task.group ${task.group}  --- toGroup ${toGroup}`);
-      // console.log('------------------------------------------------');
     }
 
     /**
-     * What ACTUALLY happens 🧠
+     * What ACTUALLY happens 
     TypeORM sees this:
     task.group → points to Group(id=10)
     So internally it translates to:
@@ -278,6 +280,7 @@ export class GroupService {
 
   if (!task.group || task.group.id !== fromGroupId)
     throw BadRequest("Task not in this group");
+  
   // Move task
   task.group = toGroup;
   await this.taskRepo.save(task);
@@ -296,7 +299,7 @@ export class GroupService {
 }
 
 async removeAllTasksFromGroup(groupId: number, userId: number) {
-  // 1️⃣ Fetch group with tasks
+  // 1️ Fetch group with tasks
   const group = await this.groupRepo.findOne({
     where: { id: groupId },
     relations: ["user", "tasks"],
@@ -305,20 +308,20 @@ async removeAllTasksFromGroup(groupId: number, userId: number) {
   if (!group) return null;
   if (group.user.id !== userId) throw Forbidden("FORBIDDEN");
 
-  // 2️⃣ Check tasks exist
+  // 2️ Check tasks exist
   if (group.tasks.length === 0) {
     throw BadRequest("No tasks in group");
   }
 
-  // 3️⃣ Remove group reference from all tasks
+  // 3️ Remove group reference from all tasks
   for (const task of group.tasks) {
     task.group = null;
   }
 
-  // 4️⃣ Save all tasks
+  // 4️ Save all tasks
   await this.taskRepo.save(group.tasks);
 
-  // 5️⃣ Return clean response
+  // 5️ Return clean response
   return {
     groupId: group.id,
     groupName: group.name,
@@ -326,13 +329,4 @@ async removeAllTasksFromGroup(groupId: number, userId: number) {
   };
 }
 
-
-  private mapTask(task: Task) {
-    return {
-      taskId: task.id,
-      taskTitle: task.title,
-      taskDescription: task.description,
-      taskStatus: task.status,
-    };
-  }
 }

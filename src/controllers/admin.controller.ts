@@ -3,18 +3,15 @@ import { AdminService } from "../services/admin.service";
 import { BadRequest, NotFound } from "../utils/errors";
 
 const adminService = new AdminService();
-
-/**
- * GET ALL USERS
- */
+ 
+// GET ALL USERS
 export const getAllUsers = async (req: Request, res: Response) => {
   const users = await adminService.getAllUsers();
   return res.status(200).json(users);
 };
 
-/**
- * GET USER OVERVIEW (VIEW ONLY)
- */
+
+//GET USER OVERVIEW (VIEW ONLY)
 export const getUserOverview = async (req: Request, res: Response) => {
   const userId = Number(req.params.id);
 
@@ -25,9 +22,8 @@ export const getUserOverview = async (req: Request, res: Response) => {
   return res.status(200).json(user);
 };
 
-/**
- * ACTIVATE / DEACTIVATE USER
- */
+
+// ACTIVATE / DEACTIVATE USER
 export const updateUserStatus = async (req: Request, res: Response) => {
   const userId = Number(req.params.id);
   const { isActive } = req.body;

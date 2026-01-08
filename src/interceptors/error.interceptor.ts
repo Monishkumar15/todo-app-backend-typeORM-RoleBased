@@ -43,7 +43,6 @@ export const errorInterceptor = (
     return res.status(err.statusCode).json({
       success: false,
       message: err.message,
-    //   errorCode: err.errorCode,
     });
   }
 

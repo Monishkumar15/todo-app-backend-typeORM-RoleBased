@@ -10,24 +10,25 @@ const options = {
     info: {
       title: "Todo API",
       version: "1.0.0",
-      description: "Todo Application Role Based API using Node.js, TypeORM, JWT"
+      description:
+        "Todo Application Role Based API using Node.js, TypeORM, JWT",
     },
     servers: [
       {
-        url: `http://localhost:${env.PORT}`
-      }
+        url: `http://localhost:${env.PORT}`,
+      },
     ],
     components: {
       securitySchemes: {
         bearerAuth: {
           type: "http",
           scheme: "bearer",
-          bearerFormat: "JWT"
-        }
-      }
-    }
+          bearerFormat: "JWT",
+        },
+      },
+    },
   },
-  apis: ["src/swagger-definitions.ts"]
+  apis: ["src/swagger-definitions.ts"],
   // apis: [path.join(__dirname, "./routes/*.ts")]
 };
 

@@ -25,7 +25,7 @@ export const createTask = async (
       req.userId!,
       title,
       description,
-        statusCode,
+      statusCode,
       groupId
     );
 

@@ -10,7 +10,6 @@ AppDataSource.initialize()
     app.listen(env.PORT, () => {
       console.log(`Server running on port ${env.PORT}`);
     });
-    
   })
   .catch((err) => {
     console.error("DB connection failed", err);

@@ -12,8 +12,19 @@ export class TaskService {
   private userRepo = AppDataSource.getRepository(User);
   private groupRepo = AppDataSource.getRepository(TaskGroup);
   private statusRepo = AppDataSource.getRepository(TaskStatus);
-
-
+  
+  private mapTask(task: Task) {
+    return {
+      id: task.id,
+      title: task.title,
+      description: task.description,
+      statusCode: task.status?.statusCode ?? null,
+      statusName: task.status?.statusName ?? null,
+      groupId: task.group?.id ?? null,
+      groupName: task.group?.name ?? null,
+    };
+  }
+  
   async createTask(
     userId: number,
     title: string,
@@ -150,10 +161,7 @@ export class TaskService {
 }
 
 
-  // async deleteTask(taskId: number, userId: number) {
-  //   const task = await this.getTaskById(taskId, userId);
-  //   await this.taskRepo.remove(task);
-  // }
+
   async deleteTask(taskId: number, userId: number) {
     const result = await this.taskRepo.findOne({
       where: { id: taskId },
@@ -169,15 +177,4 @@ export class TaskService {
     await this.taskRepo.remove(result);
   }
   
-  private mapTask(task: Task) {
-    return {
-      id: task.id,
-      title: task.title,
-      description: task.description,
-      statusCode: task.status?.statusCode ?? null,
-      statusName: task.status?.statusName ?? null,
-      groupId: task.group?.id ?? null,
-      groupName: task.group?.name ?? null,
-    };
-  }
 }

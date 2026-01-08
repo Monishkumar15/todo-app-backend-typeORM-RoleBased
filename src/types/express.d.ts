@@ -5,7 +5,7 @@ declare module "express" {
   interface Request {
     user?: User;
     userId?: number;
-    role?: "USER" | "ADMIN";
+    roleCode?: string;
     isActive?: boolean;
   }
 }

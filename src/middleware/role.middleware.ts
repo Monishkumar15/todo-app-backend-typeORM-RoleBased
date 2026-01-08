@@ -3,9 +3,9 @@ import { AuthRequest } from "./auth.middleware";
 import { Forbidden, Unauthorized } from "../utils/errors";
 
 export const roleMiddleware =
-  (allowedRoles: string) =>
+  (allowedRoles: string[]) =>
   (req: AuthRequest, res: Response, next: NextFunction) => {
-   if (!req.user || !req.user.role) {
+   if (!req.user ) {
       throw Unauthorized("Unauthorized");
     }
 

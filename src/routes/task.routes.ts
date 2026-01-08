@@ -14,10 +14,10 @@ const router = Router();
 // Protect all task routes
 router.use(authMiddleware, activeMiddleware);
 
-router.post("/", createTask);
-router.get("/", getTasks);
-router.get("/:id", getTaskById);
-router.put("/:id", updateTask);
-router.delete("/:id", deleteTask);
+router.post("/createTask", createTask);
+router.get("/getTasks", getTasks);
+router.get("/getTaskById/:id", getTaskById);
+router.put("/updateTask/:id", updateTask);
+router.delete("/deleteTask/:id", deleteTask);
 
 export default router;
